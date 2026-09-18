@@ -1,27 +1,41 @@
 /*
- * Jira RTL
- * Automatic RTL/LTR support for Jira.
+ * Jira RTL v0.2
+ * Scope direction changes to Jira content, not the surrounding application UI.
  */
 
 .jira-rtl-managed.jira-rtl {
-  direction: rtl;
-  text-align: right;
+  direction: rtl !important;
+  text-align: right !important;
 }
 
 .jira-rtl-managed.jira-ltr {
-  direction: ltr;
-  text-align: left;
-}
-
-.jira-rtl-managed pre,
-.jira-rtl-managed code,
-pre,
-code {
   direction: ltr !important;
   text-align: left !important;
 }
 
+.jira-rtl-managed {
+  unicode-bidi: plaintext;
+}
+
+/* Technical content must stay readable in its natural LTR direction. */
+pre,
+code,
+kbd,
+samp,
+.jira-rtl pre,
 .jira-rtl code {
-  unicode-bidi: isolate;
   direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate;
+}
+
+/* Jira rich-text editors should follow the text being typed. */
+[contenteditable="true"].jira-rtl {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+[contenteditable="true"].jira-ltr {
+  direction: ltr !important;
+  text-align: left !important;
 }
