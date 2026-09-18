@@ -10,7 +10,8 @@
     {
       "matches": [
         "https://*.atlassian.net/*",
-        "https://home.atlassian.com/*"
+        "https://*.jira.com/*",
+        "https://issues.devops.poalim.bank/*"
       ],
       "js": [
         "assets/browser-polyfill.min.js",
@@ -23,7 +24,8 @@
     {
       "matches": [
         "https://*.atlassian.net/*",
-        "https://home.atlassian.com/*"
+        "https://*.jira.com/*",
+        "https://issues.devops.poalim.bank/*"
       ],
       "resources": [
         "assets/jira-rtl.css"
