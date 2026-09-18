@@ -20,3 +20,6 @@ This copy is intended for environments where installing the extension from the E
 ## License and attribution
 
 The upstream project is MIT-licensed. See `LICENSE`. Original copyright and license notice are preserved.
+    "*://*.atlassian.net/*",
+    "*://*.jira.com/*",
+    "*://issues.devops.poalim.bank/*"
