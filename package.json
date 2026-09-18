@@ -1,0 +1,24 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "zip-dist": "node zip-dist.js",
+    "build:content": "vite build --mode content",
+    "build:popup": "vite build --mode popup",
+    "build": "npm-run-all build:content build:popup zip-dist",
+    "dev:content": "vite build --watch --mode content",
+    "dev:popup": "vite build --watch --mode popup",
+    "dev": "npm-run-all dev:content dev:popup"
+  },
+  "dependencies": {
+    "deepmerge": "^4.3.1",
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "npm-run-all": "^4.1.5",
+    "vite": "^7.1.2",
+    "vite-plugin-static-copy": "^3.1.1"
+  }
+}
