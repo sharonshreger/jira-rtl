@@ -1,0 +1,27 @@
+/*
+ * Jira RTL
+ * Automatic RTL/LTR support for Jira.
+ */
+
+.jira-rtl-managed.jira-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.jira-rtl-managed.jira-ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+.jira-rtl-managed pre,
+.jira-rtl-managed code,
+pre,
+code {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.jira-rtl code {
+  unicode-bidi: isolate;
+  direction: ltr !important;
+}
