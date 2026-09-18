@@ -1,0 +1,34 @@
+name: Build ready-to-install extension
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip build]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Prepare ready-to-install
+        run: |
+          rm -rf ready-to-install
+          cp -R dist ready-to-install
+          rm -f ready-to-install.zip
+      - name: Commit built extension
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f ready-to-install
+          git diff --cached --quiet || git commit -m "Add ready-to-install Edge extension [skip build]"
+          git push
