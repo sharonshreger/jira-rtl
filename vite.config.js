@@ -26,7 +26,6 @@ const contentConfig = {
 			targets: [
 				{ src: 'manifest.json', dest: '.' },
 				{ src: 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js', dest: 'assets' },
-				{ src: 'icons', dest: '.' },
 			],
 		}),
 	],
