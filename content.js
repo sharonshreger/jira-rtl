@@ -1,67 +1,125 @@
 (() => {
   "use strict";
 
-  const RTL_REGEX = /[\u0590-\u05FF\u0600-\u06FF]/;
-  const LTR_REGEX = /[A-Za-z]/;
-  const IGNORE_TAGS = new Set([
-    "SCRIPT", "STYLE", "CODE", "PRE", "TEXTAREA", "INPUT",
-    "SELECT", "OPTION", "SVG"
-  ]);
+  const RTL_RE = /[\u0590-\u05FF\u0600-\u06FF]/;
+  const LTR_RE = /[A-Za-z]/;
+  const SKIP_SELECTOR = [
+    "script", "style", "svg", "canvas", "pre", "code",
+    "[data-testid*='icon']", "[aria-hidden='true']"
+  ].join(",");
 
-  function getDirection(text) {
-    if (!text || !text.trim()) return null;
-    const rtlMatch = text.search(RTL_REGEX);
-    const ltrMatch = text.search(LTR_REGEX);
-    if (rtlMatch === -1 && ltrMatch === -1) return null;
-    return rtlMatch !== -1 && (ltrMatch === -1 || rtlMatch < ltrMatch)
-      ? "rtl"
-      : "ltr";
+  const JIRA_CONTENT_SELECTORS = [
+    "[data-testid*='issue.views.issue-base.foundation.summary']",
+    "[data-testid*='issue.views.field.rich-text.description']",
+    "[data-testid*='issue.views.field.rich-text']",
+    "[data-testid*='comment']",
+    "[data-testid*='activity']",
+    "[data-testid*='issue-field']",
+    "[data-testid*='card']",
+    "[data-testid*='modal']",
+    "[role='dialog']",
+    "[contenteditable='true']",
+    "textarea",
+    "input[type='text']"
+  ].join(",");
+
+  function directionOf(text) {
+    const value = (text || "").trim();
+    if (!value) return null;
+    const rtl = value.search(RTL_RE);
+    const ltr = value.search(LTR_RE);
+    if (rtl < 0 && ltr < 0) return null;
+    return rtl >= 0 && (ltr < 0 || rtl < ltr) ? "rtl" : "ltr";
   }
 
-  function shouldIgnore(element) {
-    if (!element || element.nodeType !== Node.ELEMENT_NODE) return true;
-    if (IGNORE_TAGS.has(element.tagName)) return true;
-    return Boolean(element.closest("pre, code"));
-  }
-
-  function applyDirection(element) {
-    if (shouldIgnore(element)) return;
-    const text = element.textContent?.trim();
-    if (!text) return;
-
-    const direction = getDirection(text);
-    if (!direction) return;
-
+  function mark(element, direction) {
+    if (!element || !direction) return;
     element.setAttribute("dir", direction);
     element.classList.add("jira-rtl-managed");
     element.classList.toggle("jira-rtl", direction === "rtl");
     element.classList.toggle("jira-ltr", direction === "ltr");
   }
 
-  function processTextNode(textNode) {
-    const parent = textNode.parentElement;
-    if (!parent || shouldIgnore(parent) || !textNode.textContent?.trim()) return;
-    applyDirection(parent);
+  function processEditable(element) {
+    const text = element.value ?? element.innerText ?? element.textContent ?? "";
+    mark(element, directionOf(text));
   }
 
-  function processNode(root) {
-    if (!root) return;
-    if (root.nodeType === Node.TEXT_NODE) {
-      processTextNode(root);
-      return;
-    }
-    if (root.nodeType !== Node.ELEMENT_NODE || shouldIgnore(root)) return;
+  function processBlock(element) {
+    if (!element || element.matches(SKIP_SELECTOR) || element.closest("pre, code")) return;
 
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent || parent.matches(SKIP_SELECTOR) || parent.closest("pre, code")) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
     let node;
-    while ((node = walker.nextNode())) processTextNode(node);
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (!parent) continue;
+
+      // Prefer paragraph/list/heading-level direction so mixed Jira UI is untouched.
+      const target = parent.closest("p, li, blockquote, h1, h2, h3, h4, h5, h6") || parent;
+      mark(target, directionOf(node.textContent));
+    }
   }
 
-  function observeChanges() {
+  function processRoot(root = document) {
+    if (!(root instanceof Document || root instanceof Element)) return;
+
+    if (root instanceof Element && root.matches(JIRA_CONTENT_SELECTORS)) {
+      root.matches("textarea,input,[contenteditable='true']")
+        ? processEditable(root)
+        : processBlock(root);
+    }
+
+    root.querySelectorAll(JIRA_CONTENT_SELECTORS).forEach((element) => {
+      element.matches("textarea,input,[contenteditable='true']")
+        ? processEditable(element)
+        : processBlock(element);
+    });
+  }
+
+  let scheduled = false;
+  const pendingRoots = new Set();
+
+  function schedule(root) {
+    if (root instanceof Element) pendingRoots.add(root);
+    if (scheduled) return;
+    scheduled = true;
+
+    requestAnimationFrame(() => {
+      scheduled = false;
+      if (!pendingRoots.size) {
+        processRoot(document);
+        return;
+      }
+      const roots = [...pendingRoots];
+      pendingRoots.clear();
+      roots.forEach(processRoot);
+    });
+  }
+
+  function observe() {
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) processNode(node);
-        if (mutation.type === "characterData") processTextNode(mutation.target);
+        if (mutation.type === "characterData") {
+          schedule(mutation.target.parentElement);
+          continue;
+        }
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof Element) schedule(node);
+        });
       }
     });
 
@@ -70,13 +128,19 @@
       subtree: true,
       characterData: true
     });
+
+    document.addEventListener("input", (event) => {
+      const target = event.target;
+      if (target instanceof Element && target.matches("textarea,input,[contenteditable='true']")) {
+        processEditable(target);
+      }
+    }, true);
   }
 
   function init() {
-    console.log("[Jira RTL] Starting...");
-    processNode(document.body);
-    observeChanges();
-    console.log("[Jira RTL] Ready");
+    processRoot(document);
+    observe();
+    console.log("[Jira RTL] v0.2.0 ready");
   }
 
   if (document.readyState === "loading") {
