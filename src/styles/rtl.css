@@ -1,0 +1,140 @@
+[data-jira-rtl-applied="true"] {
+	direction: rtl !important;
+	text-align: right !important;
+
+	/* Preserve layout of code blocks */
+	& .code-block {
+		direction: ltr;
+		text-align: left;
+	}
+
+	/* Preserve LTR direction inside <code> elements */
+	& code,
+	& .code {
+		direction: ltr;
+		unicode-bidi: embed;
+	}
+
+	/* Preserve LTR direction inside "mention" blocks */
+	& [data-testid="mention-with-profilecard-trigger"],
+	& .mentionView-content-wrap {
+		direction: ltr;
+		unicode-bidi: embed;
+	}
+
+	/* Spacing for input fields after changing their direction */
+	input&[data-test-id="search-dialog-input"],
+	[data-testid="recent-work-component"] &[data-testid="recent-work_search-input"] {
+		padding-right: 2rem;
+	}
+
+	/* In some tabs of "Your work" page, align the issue status to the left to simulate the original layout */
+	#your-work-page-tabs-0-tab &[data-test-id^="global-pages.home.ui.tab-container.tab.item-list.item-link"]>span:nth-of-type(2),
+	#your-work-page-tabs-2-tab &[data-test-id^="global-pages.home.ui.tab-container.tab.item-list.item-link"]>span:nth-of-type(2) {
+		direction: ltr;
+		text-align: left;
+		padding-left: var(--ds-space-200, 16px);
+	}
+
+	/* Expanding the container of epics titles in timeline view, so the text content will align to the right */
+	&:has([data-testid="roadmap.timeline-table-kit.ui.list-item-content.summary.title"]) {
+		width: 100%;
+	}
+
+	/* Changing layout of <blockquote> elements when combined with RTL - swapping exist rules between left and right */
+	& blockquote,
+	blockquote:has(&) {
+		padding-right: var(--ds-space-200, 16px);
+		padding-left: unset !important;
+		border-right: 2px solid var(--ds-border, var(--ds-border, #091E4224));
+		border-left: unset !important;
+	}
+
+	/* Changing layout of editor-panel elements when combined with RTL - swapping exist rules between left and right */
+	& .ak-editor-panel,
+	.ak-editor-panel:has(&) {
+		direction: rtl;
+		padding-right: var(--ds-space-100, 8px);
+		padding-left: var(--ds-space-200, 16px);
+
+		& .ak-editor-panel__icon {
+			padding-right: unset !important;
+			padding-left: var(--ds-space-100, 8px);
+		}
+	}
+
+	/* Changing layout of decision elements when combined with RTL - swapping exist rules between left and right */
+	& [data-decision-wrapper="true"] {
+		/* Decision wrapper */
+		padding-right: var(--ds-space-150, 9pt) !important;
+		padding-left: var(--ds-space-100, 8px) !important;
+
+		/* Icon placement */
+		&>[data-component="icon"],
+		&>span:has([role="img"]) {
+			margin-right: unset !important;
+			margin-left: var(--ds-space-150, 9pt) !important;
+		}
+
+		/* Placeholder during editing mode */
+		&>[data-component="placeholder"] {
+			margin: 0 calc(var(--ds-space-100, 8px) * 3.5) 0 0 !important;
+		}
+	}
+
+	/* Changing layout of "expand" elements when combined with RTL */
+	& [data-node-type="expand"],
+	[data-node-type="expand"]:has(&) {
+		direction: rtl;
+
+		/* Flipping the geometry of the caret icon in the expand title */
+		& span[role="img"] {
+			transform: scaleX(-1);
+		}
+	}
+
+	/* Changing layout of action items inside an editable element with text editor */
+	& [data-task-list-local-id],
+	&[data-task-list-local-id] {
+		& [data-component="placeholder"] {
+			margin: 0 calc(var(--ds-space-100, 8px) * 3) 0 0 !important;
+		}
+	}
+
+	/* Changing layout of tables inside editable elements with text editor, when combined with RTL */
+	table[data-testid="renderer-table"]:has(&) {
+		direction: rtl;
+	}
+
+	/* Options list of a "search issue" link section */
+	[data-testid="issue-link-search-select--listbox"] &[data-testid^="issue-link-search-select--option"]>span>span:nth-of-type(1) {
+		padding-right: unset !important;
+		padding-left: var(--ds-space-100, 8px);
+	}
+
+	/* Cards titles in Sprint or Kanban board view */
+	&[data-component-selector="platform-card.ui.card.card-content.content-section"] {
+
+		/* Revert direction on the container if there is an edit button.
+		In that case, apply RTL direction directly on the text */
+		&:has([data-testid="issue-field-single-line-text-readview-card.ui.single-line-text.container.box"]) {
+			direction: ltr !important;
+		}
+
+		& [data-testid="issue-field-single-line-text-readview-card.ui.single-line-text.container.box"] {
+			direction: rtl;
+
+			/* Edit icon near the cards title */
+			&>span {
+				left: 0;
+				right: unset;
+			}
+			
+			&>span>span {
+				transform: translate(-30px, 4px);
+				left: 0;
+				right: unset;
+			}
+		}
+	}
+}
